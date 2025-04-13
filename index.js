@@ -72,7 +72,7 @@ async function setupProxy() {
       console.log(chalk.red("Tệp proxy.txt trống hoặc không tìm thấy. Tiếp tục mà không cần proxy."));
     }
   } else {
-    console.log(chalk.blue("Melanjutkan tanpa proxy."));
+    console.log(chalk.blue("Tiếp tục mà không có."));
   }
 }
 
