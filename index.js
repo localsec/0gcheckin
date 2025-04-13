@@ -53,7 +53,7 @@ let agent = null;
 let axiosInstance = axios.create();
 
 async function setupProxy() {
-  const useProxy = await askQuestion(chalk.cyan("\nApakah Anda ingin menggunakan proxy? (Y/n): "));
+  const useProxy = await askQuestion(chalk.cyan("\nBạn có muốn sử dụng proxy? (Y/n): "));
   if (useProxy.toLowerCase() === 'y') {
     const proxies = readProxiesFromFile('proxy.txt');
     if (proxies.length > 0) {
