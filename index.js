@@ -31,7 +31,7 @@ function readProxiesFromFile(filename) {
     const content = fs.readFileSync(filename, 'utf8');
     return content.split('\n').map(line => line.trim()).filter(line => line !== '');
   } catch (err) {
-    console.error(chalk.red("Gagal membaca file proxy.txt:", err.message));
+    console.error(chalk.red("Không đọc đượcfile proxy.txt:", err.message));
     return [];
   }
 }
@@ -46,7 +46,7 @@ cfonts.say("LocalSec", {
   space: true,
   maxLength: "0",
 });
-console.log(centerText("=== Kanal Telegram 🚀 : LocalSec (@NTExhaust) ==="));
+console.log(centerText("=== Kanal Telegram 🚀 : LocalSec ==="));
 
 let proxyUrl = null;
 let agent = null;
@@ -63,16 +63,16 @@ async function setupProxy() {
       } else if (proxyUrl.startsWith('socks5://')) {
         agent = new SocksProxyAgent(proxyUrl);
       } else {
-        console.log(chalk.red("Format proxy tidak dikenali. Harap gunakan http/https atau socks5."));
+        console.log(chalk.red("Định dạng proxy không được nhận dạng. Vui lòng sử dụng http/https hoặc socks5."));
         return;
       }
       axiosInstance = axios.create({ httpAgent: agent, httpsAgent: agent });
       console.log(chalk.green(`Menggunakan proxy: ${proxyUrl}`));
     } else {
-      console.log(chalk.red("File proxy.txt kosong atau tidak ditemukan. Melanjutkan tanpa proxy."));
+      console.log(chalk.red("File proxy.txt trống rỗng hoặc không tìm thấy. Không sử dụng proxy"));
     }
   } else {
-    console.log(chalk.blue("Melanjutkan tanpa proxy."));
+    console.log(chalk.blue("Không sử dụng proxy"));
   }
 }
 
@@ -487,7 +487,7 @@ function readPrivateKeysFromFile(filename) {
     const content = fs.readFileSync(filename, 'utf8');
     return content.split('\n').map(line => line.trim()).filter(line => line !== '');
   } catch (err) {
-    console.error(chalk.red("Gagal membaca file .env:", err.message));
+    console.error(chalk.red("Không đọc đượcfile .env:", err.message));
     process.exit(1);
   }
 }
