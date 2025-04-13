@@ -31,7 +31,7 @@ function readProxiesFromFile(filename) {
     const content = fs.readFileSync(filename, 'utf8');
     return content.split('\n').map(line => line.trim()).filter(line => line !== '');
   } catch (err) {
-    console.error(chalk.red("Không đọc đượcfile proxy.txt:", err.message));
+    console.error(chalk.red("Không đọc được file proxy.txt:", err.message));
     return [];
   }
 }
@@ -46,7 +46,7 @@ cfonts.say("LocalSec", {
   space: true,
   maxLength: "0",
 });
-console.log(centerText("=== Kanal Telegram 🚀 : LocalSec ==="));
+console.log(centerText("===  🚀 : LocalSec ==="));
 
 let proxyUrl = null;
 let agent = null;
@@ -69,10 +69,10 @@ async function setupProxy() {
       axiosInstance = axios.create({ httpAgent: agent, httpsAgent: agent });
       console.log(chalk.green(`Menggunakan proxy: ${proxyUrl}`));
     } else {
-      console.log(chalk.red("File proxy.txt trống rỗng hoặc không tìm thấy. Không sử dụng proxy"));
+      console.log(chalk.red("Tệp proxy.txt trống hoặc không tìm thấy. Tiếp tục mà không cần proxy."));
     }
   } else {
-    console.log(chalk.blue("Không sử dụng proxy"));
+    console.log(chalk.blue("Melanjutkan tanpa proxy."));
   }
 }
 
@@ -112,14 +112,14 @@ async function requestWithRetry(fn, maxRetries = 30, delayMs = 2000, debug = fal
     } catch (err) {
       if (err.response && err.response.status === 429) {
         attempt++;
-        if (debug) console.warn(chalk.yellow(`Thử lần ${attempt}: Nhận được 429, thử lại sau ${delayMs}ms...`));
+        if (debug) console.warn(chalk.yellow(`Attempt ${attempt}: Received 429, retrying in ${delayMs}ms...`));
         await new Promise(resolve => setTimeout(resolve, delayMs));
       } else {
         throw err;
       }
     }
   }
-  throw new Error("Đã đạt số lần thử tối đa");
+  throw new Error("Đã đạt đến số lần thử lại tối đa");
 }
 
 async function verifyTask(activityId, headers) {
@@ -214,7 +214,7 @@ async function performCheckIn(activityId, headers) {
     const response = await axiosInstance.post("https://api.deform.cc/", payload, { headers });
     return response.data;
   } catch (err) {
-    console.error(chalk.red("Lỗi khi check-in:", err.response ? err.response.data : err.message));
+    console.error(chalk.red("Lỗi khi kiểm tra:", err.response ? err.response.data : err.message));
     return null;
   }
 }
@@ -224,7 +224,7 @@ async function doLogin(walletKey, debug = false) {
     return await requestWithRetry(async () => {
       const wallet = new Wallet(walletKey);
       const address = wallet.address;
-      if (debug) console.log(chalk.blue("Địa chỉ ví:", address));
+      if (debug) console.log(chalk.blue("Wallet address:", address));
 
       const privyHeaders = {
         "Host": "auth.privy.io",
@@ -240,17 +240,17 @@ async function doLogin(walletKey, debug = false) {
       const initResponse = await axiosInstance.post("https://auth.privy.io/api/v1/siwe/init", { address }, { headers: privyHeaders });
       const { nonce } = initResponse.data;
       const issuedAt = new Date().toISOString();
-      const message = `puzzlemania.0g.ai yêu cầu bạn đăng nhập bằng tài khoản Ethereum của mình:
+      const message = `puzzlemania.0g.ai muốn bạn đăng nhập bằng tài khoản Ethereum của bạn:
 ${address}
 
-Bằng cách ký, bạn chứng minh rằng bạn sở hữu ví này và đăng nhập. Điều này không khởi tạo giao dịch hoặc tốn bất kỳ phí nào.
+Bằng cách đăng nhập, bạn chứng minh rằng bạn sở hữu ví này và đăng nhập. Việc này không khởi tạo giao dịch hoặc mất bất kỳ khoản phí nào..
 
 URI: https://puzzlemania.0g.ai
-Phiên bản: 1
-ID Chuỗi: 8453
+Version: 1
+Chain ID: 8453
 Nonce: ${nonce}
-Thời gian phát hành: ${issuedAt}
-Tài nguyên:
+Issued At: ${issuedAt}
+Resources:
 - https://privy.io`;
 
       const signature = await wallet.signMessage(message);
@@ -264,7 +264,7 @@ Tài nguyên:
       };
       const authResponse = await axiosInstance.post("https://auth.privy.io/api/v1/siwe/authenticate", authPayload, { headers: privyHeaders });
       const { token, user } = authResponse.data;
-      let displayName = "Không xác định";
+      let displayName = "Unknown";
       if (user && user.linked_accounts) {
         const twitterAcc = user.linked_accounts.find(acc => acc.type === "twitter_oauth" && acc.name);
         if (twitterAcc) displayName = twitterAcc.name.split("|")[0].trim();
@@ -287,20 +287,20 @@ Tài nguyên:
 
       return { userLoginToken, displayName, wallet, address, loginTime: Date.now() };
     }, 30, 2000, debug);
-  } catch (err) {
-    console.error(chalk.red(`Đăng nhập thất bại cho tài khoản ${shortAddress((new Wallet(walletKey)).address)}: ${err.message}`));
+  perspective} catch (err) {
+    console.error(chalk.red(`Login gagal untuk akun ${shortAddress((new Wallet(walletKey)).address)}: ${err.message}`));
     return null;
   }
 }
 
 async function runCycleOnce(walletKey) {
-  const loginSpinner = ora(chalk.cyan(" Đang xử lý đăng nhập...")).start();
+  const loginSpinner = ora(chalk.cyan(" Memproses login...")).start();
   const loginData = await doLogin(walletKey, false);
   if (!loginData) {
-    loginSpinner.fail(chalk.red("Đăng nhập thất bại sau số lần thử tối đa. Bỏ qua tài khoản."));
+    loginSpinner.fail(chalk.red("Đăng nhập không thành công sau nhiều lần thử. Bỏ qua tài khoản."));
     return;
   }
-  loginSpinner.succeed(chalk.green(" Đăng nhập thành công"));
+  loginSpinner.succeed(chalk.green(" Login Sukses"));
 
   const { userLoginToken, displayName, address, loginTime } = loginData;
 
@@ -331,7 +331,7 @@ async function runCycleOnce(walletKey) {
     const response = await axiosInstance.post("https://api.deform.cc/", userMePayload, { headers: userMeHeaders });
     userMePoints = response.data.data.userMe.campaignSpot.points || 0;
   } catch (err) {
-    console.error(chalk.red("Lỗi khi lấy XP UserMe:", err.response ? err.response.data : err.message));
+    console.error(chalk.red("Lỗi khi tải XP UserMe:", err.response ? err.response.data : err.message));
   }
 
   const campaignPayload = {
@@ -370,7 +370,7 @@ async function runCycleOnce(walletKey) {
     const campaignResponse = await axiosInstance.post("https://api.deform.cc/", campaignPayload, { headers: campaignHeaders });
     campaignData = campaignResponse.data.data.campaign;
   } catch (err) {
-    console.error(chalk.red("Lỗi chiến dịch:", err.response ? err.response.data : err.message));
+    console.error(chalk.red("Chiến dịch lỗi:", err.response ? err.response.data : err.message));
     throw err;
   }
   if (!campaignData) throw new Error("Không tìm thấy dữ liệu chiến dịch");
@@ -389,10 +389,10 @@ async function runCycleOnce(walletKey) {
     }
   });
 
-  let checkinStatus = "Chưa Check-in";
+  let checkinStatus = "Belum Check-in";
   if (dailyCheckin) {
     if (!dailyCheckin.records || dailyCheckin.records.length === 0) {
-      const spinnerCheckin = ora(chalk.cyan(`Đang thực hiện check-in cho: ${dailyCheckin.title}`)).start();
+      const spinnerCheckin = ora(chalk.cyan(`Kiểm tra trong: ${dailyCheckin.title}`)).start();
       const checkInResponse = await performCheckIn(dailyCheckin.id, campaignHeaders);
       spinnerCheckin.stop();
       if (
@@ -403,50 +403,50 @@ async function runCycleOnce(walletKey) {
         checkInResponse.data.verifyActivity.record.status &&
         checkInResponse.data.verifyActivity.record.status.toUpperCase() === "COMPLETED"
       ) {
-        checkinStatus = "Check-in Thành công";
+        checkinStatus = "Đăng ký thành công";
         dailyCheckin.records = [checkInResponse.data.verifyActivity.record];
       } else {
-        console.log(chalk.red("Check-in Thất bại."));
+        console.log(chalk.red("Đăng ký không thành công."));
       }
     } else {
-      checkinStatus = "Hoàn tất";
+      checkinStatus = "Selesai";
     }
   }
   
   console.clear();
   console.log(chalk.magenta('\n==========================================================================='));
-  console.log(chalk.blueBright.bold('                         THÔNG TIN NGƯỜI DÙNG'));
+  console.log(chalk.blueBright.bold('                         USER INFORMATION'));
   console.log(chalk.magenta('============================================================================'));
-  console.log(chalk.cyanBright(`Tên           : ${displayName}`));
-  console.log(chalk.cyanBright(`Địa chỉ       : ${shortAddress(address)}`));
+  console.log(chalk.cyanBright(`Name          : ${displayName}`));
+  console.log(chalk.cyanBright(`Address       : ${shortAddress(address)}`));
   console.log(chalk.cyanBright(`XP            : ${userMePoints}`));
-  console.log(chalk.cyanBright(`Check-in Hàng ngày : ${dailyCheckin ? checkinStatus : "Chưa Hoàn tất"}`));
-  console.log(chalk.cyanBright(`Proxy         : ${proxyUrl || "Không có"}`));
+  console.log(chalk.cyanBright(`Daily Checkin : ${dailyCheckin ? checkinStatus : "Chưa hoàn thành"}`));
+  console.log(chalk.cyanBright(`Proxy         : ${proxyUrl || "Không tồn tại"}`));
   console.log(chalk.magenta('============================================================================'));
 
-  console.log(chalk.magenta('\n----------------------------- Nhiệm vụ Đã Nhận ----------------------------\n'));
+  console.log(chalk.magenta('\n----------------------------- Claimed Tasks ----------------------------\n'));
   if (claimedTasks.length === 0) {
-    console.log(chalk.red('(Không có nhiệm vụ nào đã được nhận)\n'));
+    console.log(chalk.red('(Không tồn tại nhiệm vụ được yêu cầu)\n'));
   } else {
     claimedTasks.forEach(task => {
-      console.log(chalk.green(`[ĐÃ XÁC MINH] Nhiệm vụ: ${task.title} => Đã Nhận`));
+      console.log(chalk.green(`[VERIFIED] Task: ${task.title} => Đã được yêu cầu`));
     });
     console.log('');
   }
   console.log(chalk.magenta('------------------------------------------------------------------------\n'));
 
-  console.log(chalk.magenta('---------------------------- Nhiệm vụ Chưa Nhận ---------------------------\n'));
+  console.log(chalk.magenta('---------------------------- Nhiệm vụ chưa được nhận ---------------------------\n'));
   if (unclaimedTasks.length === 0) {
-    console.log(chalk.red('(Không có nhiệm vụ chưa nhận)\n'));
+    console.log(chalk.red('(Không tồn tại nhiệm vụ chưa được nhận)\n'));
   } else {
     for (const task of unclaimedTasks) {
-      const spinnerTask = ora(chalk.cyan(`Đang xác minh: ${task.title}`)).start();
+      const spinnerTask = ora(chalk.cyan(`Verifying: ${task.title}`)).start();
       const verified = await verifyTask(task.id, campaignHeaders);
       spinnerTask.stop();
       if (verified) {
-        console.log(chalk.green(`[ĐÃ XÁC MINH] Nhiệm vụ: ${task.title} => Đã Nhận`));
+        console.log(chalk.green(`[VERIFIED] Task: ${task.title} => Claimed`));
       } else {
-        console.log(chalk.red(`[CHƯA XÁC MINH] Nhiệm vụ: ${task.title}`));
+        console.log(chalk.red(`[UNVERIFIED] Task: ${task.title}`));
       }
     }
   }
@@ -458,7 +458,7 @@ async function mainLoopRoundRobin() {
 
   const accounts = readPrivateKeysFromFile('.env');
   if (!accounts.length) {
-    console.error(chalk.red("Không tìm thấy khóa riêng tư nào trong file .env"));
+    console.error(chalk.red("Không tồn tại private key được tìm thấy trong file .env"));
     process.exit(1);
   }
 
@@ -487,7 +487,7 @@ function readPrivateKeysFromFile(filename) {
     const content = fs.readFileSync(filename, 'utf8');
     return content.split('\n').map(line => line.trim()).filter(line => line !== '');
   } catch (err) {
-    console.error(chalk.red("Không đọc đượcfile .env:", err.message));
+    console.error(chalk.red("Không đọc được file .env:", err.message));
     process.exit(1);
   }
 }
