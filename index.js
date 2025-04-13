@@ -72,7 +72,7 @@ async function setupProxy() {
       console.log(chalk.red("Tệp proxy.txt trống hoặc không tìm thấy. Tiếp tục mà không cần proxy."));
     }
   } else {
-    console.log(chalk.blue("Tiếp tục mà không có."));
+    console.log(chalk.blue("Tiếp tục mà không cần proxy."));
   }
 }
 
@@ -294,7 +294,7 @@ Resources:
 }
 
 async function runCycleOnce(walletKey) {
-  const loginSpinner = ora(chalk.cyan(" Memproses login...")).start();
+  const loginSpinner = ora(chalk.cyan(" Xử lý login...")).start();
   const loginData = await doLogin(walletKey, false);
   if (!loginData) {
     loginSpinner.fail(chalk.red("Đăng nhập không thành công sau nhiều lần thử. Bỏ qua tài khoản."));
